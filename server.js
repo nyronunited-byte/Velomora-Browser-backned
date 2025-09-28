@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const fetch = require('node-fetch'); // 👈 Important: add this
 require('dotenv').config();
 
 const app = express();
@@ -32,7 +33,7 @@ app.get('/search', async (req, res) => {
         const results = data.organic_results ? data.organic_results.map(item => ({
             title: item.title,
             link: item.link,
-            snippet: item.snippet
+            snippet: item.snippet || ""
         })) : [];
 
         res.json({ results });
