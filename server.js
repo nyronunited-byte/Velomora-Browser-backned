@@ -28,8 +28,10 @@ app.get('/search', async (req, res) => {
         const results = {
             organic: [],
             images: [],
+            videos: [],
             news: [],
-            videos: []
+            shopping: [],
+            maps: []
         };
 
         // Organic (websites)
@@ -50,6 +52,16 @@ app.get('/search', async (req, res) => {
             }));
         }
 
+        // Videos
+        if (data.video_results) {
+            results.videos = data.video_results.map(v => ({
+                title: v.title,
+                link: v.link,
+                thumbnail: v.thumbnail,
+                source: v.source
+            }));
+        }
+
         // News
         if (data.news_results) {
             results.news = data.news_results.map(item => ({
@@ -61,13 +73,26 @@ app.get('/search', async (req, res) => {
             }));
         }
 
-        // Videos (some searches may include videos_results)
-        if (data.video_results) {
-            results.videos = data.video_results.map(v => ({
-                title: v.title,
-                link: v.link,
-                thumbnail: v.thumbnail,
-                source: v.source
+        // Shopping
+        if (data.shopping_results) {
+            results.shopping = data.shopping_results.map(p => ({
+                title: p.title,
+                link: p.link,
+                price: p.price,
+                source: p.source,
+                thumbnail: p.thumbnail
+            }));
+        }
+
+        // Maps / Local
+        if (data.local_results) {
+            results.maps = data.local_results.map(loc => ({
+                title: loc.title,
+                link: loc.link,
+                address: loc.address,
+                phone: loc.phone,
+                rating: loc.rating,
+                thumbnail: loc.thumbnail
             }));
         }
 
@@ -79,11 +104,11 @@ app.get('/search', async (req, res) => {
     }
 });
 
+// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Velomora Backend is running' });
 });
 
 app.listen(PORT, () => {
     console.log(`🚀 Velomora Backend running on port ${PORT}`);
-    console.log(`🔍 Search endpoint: http://localhost:${PORT}/search?q=your_query`);
 });
