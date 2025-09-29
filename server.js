@@ -1,20 +1,17 @@
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch'); // 👈 Important: add this
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Search endpoint
 app.get('/search', async (req, res) => {
     try {
         const query = req.query.q;
-        
         if (!query) {
             return res.status(400).json({ error: 'Query parameter "q" is required' });
         }
@@ -25,26 +22,63 @@ app.get('/search', async (req, res) => {
         }
 
         const apiUrl = `https://serpapi.com/search.json?engine=duckduckgo&q=${encodeURIComponent(query)}&api_key=${apiKey}`;
-        
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // Extract only title, link, and snippet from results
-        const results = data.organic_results ? data.organic_results.map(item => ({
-            title: item.title,
-            link: item.link,
-            snippet: item.snippet || ""
-        })) : [];
+        const results = {
+            organic: [],
+            images: [],
+            news: [],
+            videos: []
+        };
 
-        res.json({ results });
-        
+        // Organic (websites)
+        if (data.organic_results) {
+            results.organic = data.organic_results.map(item => ({
+                title: item.title,
+                link: item.link,
+                snippet: item.snippet || ""
+            }));
+        }
+
+        // Inline Images
+        if (data.inline_images) {
+            results.images = data.inline_images.map(img => ({
+                title: img.title,
+                link: img.link,
+                thumbnail: img.thumbnail || img.image
+            }));
+        }
+
+        // News
+        if (data.news_results) {
+            results.news = data.news_results.map(item => ({
+                title: item.title,
+                link: item.link,
+                snippet: item.snippet,
+                source: item.source,
+                thumbnail: item.thumbnail
+            }));
+        }
+
+        // Videos (some searches may include videos_results)
+        if (data.video_results) {
+            results.videos = data.video_results.map(v => ({
+                title: v.title,
+                link: v.link,
+                thumbnail: v.thumbnail,
+                source: v.source
+            }));
+        }
+
+        res.json(results);
+
     } catch (error) {
         console.error('Search error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Velomora Backend is running' });
 });
