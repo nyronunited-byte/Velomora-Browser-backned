@@ -21,7 +21,8 @@ app.get('/search', async (req, res) => {
             return res.status(500).json({ error: 'API key not configured' });
         }
 
-        const apiUrl = `https://serpapi.com/search.json?engine=duckduckgo&q=${encodeURIComponent(query)}&api_key=${apiKey}`;
+        // 🔹 DuckDuckGo → Google engine
+        const apiUrl = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}&api_key=${apiKey}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
 
@@ -34,7 +35,7 @@ app.get('/search', async (req, res) => {
             maps: []
         };
 
-        // Organic (websites)
+        // Organic
         if (data.organic_results) {
             results.organic = data.organic_results.map(item => ({
                 title: item.title,
@@ -43,12 +44,12 @@ app.get('/search', async (req, res) => {
             }));
         }
 
-        // Inline Images
-        if (data.inline_images) {
-            results.images = data.inline_images.map(img => ({
+        // Images
+        if (data.images_results) {
+            results.images = data.images_results.map(img => ({
                 title: img.title,
                 link: img.link,
-                thumbnail: img.thumbnail || img.image
+                thumbnail: img.thumbnail
             }));
         }
 
