@@ -9,34 +9,37 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// 🔍 Search Endpoint
 app.get('/search', async (req, res) => {
     try {
         const query = req.query.q;
-        const page = req.query.page || 1;
+        const page = parseInt(req.query.page) || 1;
 
         if (!query) {
             return res.status(400).json({ error: 'Query parameter "q" is required' });
         }
 
-        const apiKey = process.env.API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: 'API key not configured' });
+        const apiKey = process.env.GOOGLE_API_KEY;
+        const cx = process.env.CX_ID;
+
+        if (!apiKey || !cx) {
+            return res.status(500).json({ error: 'Google API key or CX ID not configured' });
         }
 
-        const apiUrl = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}&api_key=${apiKey}&start=${(page - 1) * 10}`;
+        // Google Custom Search API (official)
+        const startIndex = (page - 1) * 10 + 1; // Google API uses 1-based indexing
+        const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&start=${startIndex}`;
+
         const response = await fetch(apiUrl);
         const data = await response.json();
 
+        // Format results
         const results = {
-            organic: data.organic_results || [],
-            images: data.images_results || [],
-            videos: data.video_results || [],
-            news: data.news_results || [],
-            shopping: data.shopping_results || [],
-            maps: data.local_results || [],
-            related_questions: data.related_questions || [],
-            knowledge_graph: data.knowledge_graph || null,
-            pagination: data.serpapi_pagination || null
+            organic: data.items || [],
+            searchInformation: data.searchInformation || null,
+            spelling: data.spelling || null,
+            promotions: data.promotions || null,
+            queries: data.queries || null
         };
 
         res.json(results);
@@ -47,10 +50,12 @@ app.get('/search', async (req, res) => {
     }
 });
 
+// 🩺 Health Check Endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Velomora Backend is running' });
 });
 
+// 🚀 Start Server
 app.listen(PORT, () => {
     console.log(`🚀 Velomora Backend running on port ${PORT}`);
 });
