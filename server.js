@@ -3,6 +3,9 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 require('dotenv').config();
 
+console.log("✅ GOOGLE_API_KEY:", process.env.GOOGLE_API_KEY);
+console.log("✅ CX_ID:", process.env.CX_ID);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -16,7 +19,7 @@ app.get('/search', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
 
         if (!query) {
-            return res.status(400).json({ error: 'Query parameter "q" is required' });
+            return res.status(400).json({ error: 'Query parameter \"q\" is required' });
         }
 
         const apiKey = process.env.GOOGLE_API_KEY;
