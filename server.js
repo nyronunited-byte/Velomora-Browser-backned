@@ -19,7 +19,7 @@ app.get('/search', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
 
         if (!query) {
-            return res.status(400).json({ error: 'Query parameter \"q\" is required' });
+            return res.status(400).json({ error: 'Query parameter "q" is required' });
         }
 
         const apiKey = process.env.GOOGLE_API_KEY;
@@ -58,7 +58,7 @@ app.get('/images', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
 
         if (!query) {
-            return res.status(400).json({ error: 'Query parameter \"q\" is required' });
+            return res.status(400).json({ error: 'Query parameter "q" is required' });
         }
 
         const apiKey = process.env.GOOGLE_API_KEY;
@@ -76,7 +76,7 @@ app.get('/images', async (req, res) => {
 
         const images = data.items ? data.items.map(img => ({
             title: img.title,
-            link: img.link, // original image
+            link: img.link, 
             thumbnail: img.image?.thumbnailLink,
             context: img.image?.contextLink
         })) : [];
@@ -85,6 +85,34 @@ app.get('/images', async (req, res) => {
 
     } catch (error) {
         console.error("Image search error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✨ Suggestion Endpoint (Google Places Autocomplete API)
+app.get('/suggest', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) {
+            return res.status(400).json({ error: 'Query parameter "q" is required' });
+        }
+
+        const apiKey = process.env.GOOGLE_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Google API key not configured' });
+        }
+
+        const apiUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${apiKey}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        // Sirf predictions bhejna
+        const suggestions = data.predictions ? data.predictions.map(item => item.description) : [];
+
+        res.json({ suggestions });
+
+    } catch (error) {
+        console.error("Suggest error:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });
